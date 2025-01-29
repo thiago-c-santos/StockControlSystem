@@ -40,8 +40,6 @@ namespace ConsoleApp1.Data
 
             using var reader = selectCmd.ExecuteReader();
 
-            connection.Close();
-
             List<Product> products = new List<Product>();
 
             while (reader.Read())
@@ -72,8 +70,6 @@ namespace ConsoleApp1.Data
 
             using var reader = selectCmd.ExecuteReader();
 
-            connection.Close();
-
             List<Product> products = new List<Product>();
 
             while (reader.Read())
@@ -88,6 +84,8 @@ namespace ConsoleApp1.Data
                     Deleted = reader.GetBoolean(5)
                 });
             }
+
+            connection.Close();
 
             return products;
         }

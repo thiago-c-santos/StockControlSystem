@@ -35,9 +35,7 @@ namespace StockControl.Data
             using var selectCmd = connection.CreateCommand();
             selectCmd.CommandText = $"Select * from Employee where Cpf = '{cpf}' and IsUnemployed = false";
 
-            using var reader = selectCmd.ExecuteReader();
-
-            connection.Close();
+            using var reader = selectCmd.ExecuteReader();            
 
             Employee employee = new Employee();
 
@@ -50,6 +48,8 @@ namespace StockControl.Data
                 employee.UnemploymentDate = Convert.ToDateTime(reader.GetTimeSpan(4));
                 employee.IsEmployed = reader.GetBoolean(5);
             }
+
+            connection.Close();
 
             return employee;
         }
