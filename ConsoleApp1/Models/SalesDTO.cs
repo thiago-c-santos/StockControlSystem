@@ -4,8 +4,8 @@
     {
         public string ProductName { get; set; } = string.Empty;
 
-        public int SoldAmount { get; set; }
+        public int? SoldAmount { get; set; }
 
-        public string EmployeeName { get; set; } = string.Empty;
+        public string? EmployeeName { get; set; } = string.Empty;
     }
 }

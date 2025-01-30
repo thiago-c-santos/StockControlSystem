@@ -1,8 +1,5 @@
-﻿using ConsoleApp1.Models;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using StockControl.Models;
-using System.Globalization;
-using System.Xml.Linq;
 
 namespace StockControl.Data
 {
@@ -33,22 +30,24 @@ namespace StockControl.Data
             connection.Open();
 
             using var selectCmd = connection.CreateCommand();
-            selectCmd.CommandText = $"Select * from Employee where Cpf = '{cpf}' and IsUnemployed = false";
+            selectCmd.CommandText = $"Select * from Employee where Cpf = '{cpf}' and IsEmployed = true";
 
             using var reader = selectCmd.ExecuteReader();            
 
             Employee employee = new Employee();
 
-            if (reader == null)
-                return employee;
-
             while (reader.Read())
             {
+                if (!reader.HasRows)
+                {
+                    return employee;
+                }
+
                 employee.Id = reader.GetInt32(0);
                 employee.Name = reader.GetString(1);
                 employee.Cpf = reader.GetString(2);
-                employee.HiringDate = Convert.ToDateTime(reader.GetTimeSpan(3));
-                employee.UnemploymentDate = Convert.ToDateTime(reader.GetTimeSpan(4));
+                employee.HiringDate = reader.GetDateTime(3);
+                employee.UnemploymentDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
                 employee.IsEmployed = reader.GetBoolean(5);
             }
 
@@ -69,10 +68,13 @@ namespace StockControl.Data
 
             List<Employee> employees = new List<Employee>();
 
-            if(reader == null) return employees;
-
             while (reader.Read())
             {
+                if (!reader.HasRows)
+                {
+                    return employees;
+                }
+
                 employees.Add(new Employee()
                 {
                     Id = reader.GetInt32(0),
@@ -95,7 +97,10 @@ namespace StockControl.Data
             connection.Open();
 
             using var updateCmd = connection.CreateCommand();
-            updateCmd.CommandText = $"Update Employee Set IsEmployed = false, UnemploymentDate = {DateTime.Now} where Id = {id}";
+
+            string unemploymentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ss");
+
+            updateCmd.CommandText = $"Update Employee Set IsEmployed = false, UnemploymentDate = '{unemploymentDate}' where Id = {id}";
 
             updateCmd.ExecuteNonQuery();
 
@@ -114,10 +119,13 @@ namespace StockControl.Data
 
             List<Employee> employees = new List<Employee>();
 
-            if (reader == null) return employees;
-
             while (reader.Read())
             {
+                if (!reader.HasRows)
+                {
+                    return employees;
+                }
+
                 employees.Add(new Employee()
                 {
                     Id = reader.GetInt32(0),

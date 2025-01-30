@@ -133,7 +133,8 @@ class StockControlMain
 
         foreach(Product product in products)
         {
-            Console.WriteLine($"Nome: {product.Name} - Descrição = {product.Description ?? "Nenhuma descrição adicionada"} Valor: R$ {product.Price} - Quantidade em estoque: {product.StockAmount}");
+            product.Description = product.Description == null || string.IsNullOrEmpty(product.Description) ? "Nenhuma descrição adicionada" : product.Description;
+            Console.WriteLine($"Nome: {product.Name} - Descrição: {product.Description} - Valor: R$ {product.Price} - Quantidade em estoque: {product.StockAmount}");
         }
 
         return products;
@@ -141,6 +142,9 @@ class StockControlMain
 
     static List<Product> GetByName()
     {
+        //Linebreak
+        Console.WriteLine();
+
         Console.WriteLine("Digite o nome do produto que quer procurar");
         string name = Console.ReadLine();
 
@@ -166,7 +170,7 @@ class StockControlMain
 
         foreach (Product product in products)
         {
-            Console.WriteLine($"Nome: {product.Name} - Descrição = {product.Description ?? "Nenhuma descrição adicionada"} Valor: R$ {product.Price} - Quantidade em estoque: {product.StockAmount}");
+            Console.WriteLine($"Nome: {product.Name} - Descrição: {product.Description ?? "Nenhuma descrição adicionada"} - Valor: R$ {product.Price} - Quantidade em estoque: {product.StockAmount}");
         }
 
         return products;
@@ -180,9 +184,9 @@ class StockControlMain
         Product product = new Product();
 
         Console.WriteLine("*Primeiro precisamos encontrar o produto que deseja atualizar. Por favor digite o nome do produto e iremos verificar se ele existe: ");
-        product.Name = Console.ReadLine();
+        string productName = Console.ReadLine();
 
-        List<Product> foundProducts = _productService.GetProductByName(product.Name);
+        List<Product> foundProducts = _productService.GetProductByName(productName);
 
         if (foundProducts.Count == 0)
         {
@@ -248,11 +252,11 @@ class StockControlMain
 
     static void RegisterSale()
     {
-        Console.WriteLine("Digite o nome do produto que foi vendido e vamos verificar se ele existe: ");
-        string name = Console.ReadLine();
-
         //Linebreak
         Console.WriteLine();
+
+        Console.WriteLine("Digite o nome do produto que foi vendido e vamos verificar se ele existe. Obs: Para listar todos basta não inserir nada.");
+        string name = Console.ReadLine();
 
         List<Product> foundProducts = _productService.GetProductByName(name);
 
@@ -264,7 +268,10 @@ class StockControlMain
             Console.WriteLine("Nenhum produto encontrado.");
 
             CloseSystem();
-        }        
+        }
+
+        //Linebreak
+        Console.WriteLine();
 
         foreach (Product foundProduct in foundProducts)
         {
@@ -284,6 +291,21 @@ class StockControlMain
 
         //Get information about the employee using CPF.
         Employee employee = _employeeService.GetEmployeeByCpf(cpf);
+
+        if(employee.Id == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum CPF encontrado com o CPF informado. Gostaria de reiniciar o processo?");
+            string userAnswer = Console.ReadLine().ToLower();
+
+            if (userAnswer == "sim" || userAnswer == "si" || userAnswer == "s")
+                RegisterSale();
+            else
+                CloseSystem();
+        }
+
         sale.EmployeeId = employee.Id;
 
         Console.WriteLine("Digite quantos produtos foram vendidos: ");
@@ -517,6 +539,8 @@ class StockControlMain
 
         if (userAnswer == "não" || userAnswer == "nao" || userAnswer == "na" || userAnswer == "n")
             Main();
+        else
+            Environment.Exit(0);
     }
 
     #endregion

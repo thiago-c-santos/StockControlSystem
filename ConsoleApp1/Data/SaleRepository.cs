@@ -14,10 +14,12 @@ namespace StockControl.Data
 
             using var insertCmd = connection.CreateCommand();
 
+            string saleTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ss");
+
             insertCmd.CommandText =
             $@"
-                INSERT INTO Products (ProductId, EmployeeId, AmountSold, SaleTime)
-                VALUES ({sale.ProductId}, {sale.EmployeeId}, {sale.AmountSold}, {DateTime.Now}, false);
+                INSERT INTO Sale (ProductId, EmployeeId, AmountSold, SaleTime)
+                VALUES ({sale.ProductId}, {sale.EmployeeId}, {sale.AmountSold}, '{saleTime}');
             ";
 
             insertCmd.ExecuteNonQuery();
@@ -42,15 +44,18 @@ namespace StockControl.Data
 
             List<SalesDTO> sales = new List<SalesDTO>();
 
-            if(reader == null) return sales;
-
             while (reader.Read())
             {
+                if (!reader.HasRows)
+                {
+                    return sales;
+                }
+
                 sales.Add(new SalesDTO()
                 {
-                    EmployeeName = reader.GetString(0),
-                    ProductName = reader.GetString(1),
-                    SoldAmount = reader.GetInt32(2)
+                    EmployeeName = reader.IsDBNull(0) ? null :reader.GetString(0),
+                    ProductName = reader.IsDBNull(1) ? null : reader.GetString(1),
+                    SoldAmount = reader.IsDBNull(2) ? null : reader.GetInt32(2)
                 });
             }
 

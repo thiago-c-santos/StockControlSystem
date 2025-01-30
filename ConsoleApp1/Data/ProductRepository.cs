@@ -8,8 +8,6 @@ namespace ConsoleApp1.Data
     {
         private readonly string _connectionString = "Data Source=stock.db";
 
-        #region DatabaseOperations
-
         public void InsertProduct(Product product)
         {
             using var connection = new SqliteConnection(_connectionString);
@@ -17,6 +15,7 @@ namespace ConsoleApp1.Data
 
             using var insertCmd = connection.CreateCommand();
 
+            //Converts the value to avoid error due to different cultures.
             string value = product.Price.ToString(CultureInfo.InvariantCulture);
 
             insertCmd.CommandText =
@@ -38,12 +37,15 @@ namespace ConsoleApp1.Data
 
             using var reader = selectCmd.ExecuteReader();
 
-            List<Product> products = new List<Product>();
-            
-            if (reader == null) return products;
+            List<Product> products = new List<Product>();           
 
             while (reader.Read())
             {
+                if (!reader.HasRows)
+                {
+                    return products;
+                }
+
                 products.Add(new Product()
                 {
                     Id = reader.GetInt32(0),
@@ -72,10 +74,13 @@ namespace ConsoleApp1.Data
 
             List<Product> products = new List<Product>();
 
-            if(reader == null) return products;
-
             while (reader.Read())
             {
+                if (!reader.HasRows)
+                {
+                    return products;
+                }
+
                 products.Add(new Product()
                 {
                     Id = reader.GetInt32(0),
@@ -98,10 +103,14 @@ namespace ConsoleApp1.Data
             connection.Open();
 
             using var selectCmd = connection.CreateCommand();
+
+            //Converts the value to avoid error due to different cultures.
+            string value = product.Price.ToString(CultureInfo.InvariantCulture);
+
             selectCmd.CommandText =
                 $@"
                     UPDATE Products
-                    SET Name = '{product.Name}', Description = '{product.Description}', Price = {product.Price}, StockAmount = {product.StockAmount}, Deleted = {product.Deleted}
+                    SET Name = '{product.Name}', Description = '{product.Description}', Price = {value}, StockAmount = {product.StockAmount}, Deleted = {product.Deleted}
                     WHERE Id = {product.Id}
                 ;";
 
@@ -142,7 +151,5 @@ namespace ConsoleApp1.Data
             selectCmd.ExecuteNonQuery();
             connection.Close();
         }
-
-        #endregion
     }
 }
