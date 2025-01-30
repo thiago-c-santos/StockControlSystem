@@ -42,6 +42,8 @@ namespace StockControl.Data
 
             List<SalesDTO> sales = new List<SalesDTO>();
 
+            if(reader == null) return sales;
+
             while (reader.Read())
             {
                 sales.Add(new SalesDTO()

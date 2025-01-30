@@ -1,8 +1,6 @@
 ﻿using ConsoleApp1.Models;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Globalization;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ConsoleApp1.Data
 {
@@ -36,11 +34,13 @@ namespace ConsoleApp1.Data
             connection.Open();
 
             using var selectCmd = connection.CreateCommand();
-            selectCmd.CommandText = "Select * from Products";
+            selectCmd.CommandText = "Select * from Products where Deleted = false";
 
             using var reader = selectCmd.ExecuteReader();
 
             List<Product> products = new List<Product>();
+            
+            if (reader == null) return products;
 
             while (reader.Read())
             {
@@ -66,11 +66,13 @@ namespace ConsoleApp1.Data
             connection.Open();
 
             using var selectCmd = connection.CreateCommand();
-            selectCmd.CommandText = $"Select * from Products where Name like '%{name}%'";
+            selectCmd.CommandText = $"Select * from Products where Name like '%{name}%' and Deleted = false";
 
             using var reader = selectCmd.ExecuteReader();
 
             List<Product> products = new List<Product>();
+
+            if(reader == null) return products;
 
             while (reader.Read())
             {
@@ -138,67 +140,6 @@ namespace ConsoleApp1.Data
                 ;";
 
             selectCmd.ExecuteNonQuery();
-            connection.Close();
-        }
-
-        #endregion
-
-        #region DatabaseStartupChecks
-
-        public void CheckTableExists()
-        {
-            using var connection = new SqliteConnection(_connectionString);
-
-            connection.Open();
-
-            using var command = connection.CreateCommand();
-            command.CommandText =
-            @"
-                CREATE TABLE IF NOT EXISTS Products (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    Description TEXT NULL,
-                    Price REAL NOT NULL,
-                    StockAmount INTEGER NOT NULL,
-                    Deleted BOOL DEFAULT FALSE
-            );";
-
-            command.ExecuteNonQuery();
-
-            command.CommandText =
-                @"CREATE TABLE IF NOT EXISTS ProductsHistory(
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    Description TEXT NULL,
-                    DateAdded TIMESTAMP NOT NULL
-                );";
-
-            command.ExecuteNonQuery();
-
-            command.CommandText =
-                @"CREATE TABLE IF NOT EXISTS Employee(
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    Cpf TEXT NOT NULL,
-                    HiringDate TIMESTAMP NOT NULL,
-                    UnemploymentDate TIMESTAMP NULL,
-                    IsEmployed BOOL DEFAULT FALSE
-                );";
-
-            command.ExecuteNonQuery();
-
-            command.CommandText =
-                @"CREATE TABLE IF NOT EXISTS Sale (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ProductId INTEGER NOT NULL,
-                    EmployeeId INTEGER NOT NULL,
-                    AmountSold INTEGER NOT NULL,
-                    SaleTime TIMESTAMP NOT NULL,
-                    FOREIGN KEY (ProductId) REFERENCES Products(Id),
-                    FOREIGN KEY (EmployeeId) REFERENCES Employee(Id)
-                );";
-            command.ExecuteNonQuery();
-
             connection.Close();
         }
 

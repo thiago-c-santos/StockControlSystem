@@ -7,11 +7,6 @@ namespace ConsoleApp1.Services
     {
         private readonly ProductRepository _repository = new ProductRepository();
 
-        public void CheckTableExists()
-        {
-            _repository.CheckTableExists();
-        }
-
         public void InsertProduct(Product product)
         {
             _repository.InsertProduct(product);

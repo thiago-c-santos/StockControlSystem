@@ -10,7 +10,7 @@
 
         public DateTime HiringDate { get; set; }
 
-        public DateTime UnemploymentDate { get; set; }
+        public DateTime? UnemploymentDate { get; set; }
 
         public bool IsEmployed { get; set; }
     }

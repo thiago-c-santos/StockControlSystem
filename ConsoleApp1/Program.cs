@@ -6,15 +6,19 @@ using System.Globalization;
 
 class StockControlMain
 {
+    #region Constructor
+    private readonly static DatabaseChecksService _databaseChecksService = new DatabaseChecksService();
     private readonly static ProductService _productService = new ProductService();
     private readonly static SaleService _saleService = new SaleService();   
-    private readonly static EmployeeService _employeeService = new EmployeeService();   
+    private readonly static EmployeeService _employeeService = new EmployeeService();
+
+    #endregion
 
     static void Main()
     {
         ProductService _service = new ProductService();
-        
-        _service.CheckTableExists();
+
+        _databaseChecksService.CheckTableExists();
 
         Console.WriteLine("------------------ Gerenciador de estoque ------------------");
         Console.WriteLine("Esse sistema é responsável por realizar o gerenciamento do estoque. Para iniciar escolha uma das funções abaixo: ");
@@ -27,7 +31,10 @@ class StockControlMain
         Console.WriteLine("[6] - Registrar uma venda.");
         Console.WriteLine("[7] - Listar as vendas.");
         Console.WriteLine("[8] - Cadastrar um funcionário");
-        Console.WriteLine("[9] - Listar funcionários");
+        Console.WriteLine("[9] - Desvincular um funcionário");
+        Console.WriteLine("[10] - Listar funcionários");
+        Console.WriteLine("[11] - Listar funcionários desvinculados");
+        Console.WriteLine("[12] - Limpar a tela");
 
         int usersChoice = Convert.ToInt32(Console.ReadLine());
 
@@ -58,9 +65,21 @@ class StockControlMain
                 RegisterEmployee();
                 break;
             case 9:
+                RemoveEmployee();
+                break;
+            case 10:
                 GetEmployees();
                 break;
+            case 11:
+                GetExEmployees();
+                break;
+            case 12:
+                Console.Clear();
+                Main();
+                break;
         }
+
+        CloseSystem();
     }
 
     #region Products
@@ -97,6 +116,16 @@ class StockControlMain
     {
         List<Product> products = _productService.GetAll();
 
+        if(products.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum produto encontrado.");
+
+            CloseSystem();
+        }
+
         Console.WriteLine("Esses foram todos os produtos encontrados: ");
 
         //Linebreak
@@ -117,6 +146,16 @@ class StockControlMain
 
         List<Product> products = _productService.GetProductByName(name);
 
+        if (products.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum produto encontrado.");
+
+            CloseSystem();
+        }
+
         //Linebreak
         Console.WriteLine();
 
@@ -135,12 +174,25 @@ class StockControlMain
 
     static void UpdateProduct()
     {
+        //Linebreak
+        Console.WriteLine();
+
         Product product = new Product();
 
-        Console.WriteLine("*Digite o nome do produto que deseja atualizar");
+        Console.WriteLine("*Primeiro precisamos encontrar o produto que deseja atualizar. Por favor digite o nome do produto e iremos verificar se ele existe: ");
         product.Name = Console.ReadLine();
 
-        List<Product> foundProducts = GetByName();
+        List<Product> foundProducts = _productService.GetProductByName(product.Name);
+
+        if (foundProducts.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum produto encontrado.");
+            
+            CloseSystem();
+        }
 
         Console.WriteLine("Esses foram os produtos encontrados. Por favor digite o ID do produto que deseja atualizar.");
         Console.WriteLine();
@@ -164,8 +216,8 @@ class StockControlMain
         //Linebreak
         Console.WriteLine();
 
-        Console.WriteLine("A quantidade digitada será somada à quantidade original.");
         Console.WriteLine("*Digite a quantidade que será adicionada ao estoque: ");
+        Console.WriteLine("Obs: A quantidade digitada será somada à quantidade original.");
         product.StockAmount = Convert.ToInt32(Console.ReadLine());
 
         _productService.UpdateProduct(product);
@@ -186,6 +238,8 @@ class StockControlMain
         int chosenProduct = Convert.ToInt32(Console.ReadLine());
 
         _productService.DeleteProduct(chosenProduct);
+
+        CloseSystem();
     }
 
     #endregion
@@ -194,13 +248,23 @@ class StockControlMain
 
     static void RegisterSale()
     {
-        Console.WriteLine("Digite o nome do produto que foi vendido: ");
+        Console.WriteLine("Digite o nome do produto que foi vendido e vamos verificar se ele existe: ");
         string name = Console.ReadLine();
 
         //Linebreak
         Console.WriteLine();
 
         List<Product> foundProducts = _productService.GetProductByName(name);
+
+        if (foundProducts.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum produto encontrado.");
+
+            CloseSystem();
+        }        
 
         foreach (Product foundProduct in foundProducts)
         {
@@ -225,26 +289,52 @@ class StockControlMain
         Console.WriteLine("Digite quantos produtos foram vendidos: ");
         sale.AmountSold = Convert.ToInt32(Console.ReadLine());
 
-        sale.SaleTime = DateTime.Now;
+        Product chosenProduct = foundProducts.Where(e => e.Id == sale.ProductId).FirstOrDefault();
+        if (chosenProduct.StockAmount < 1 || chosenProduct.StockAmount - sale.AmountSold < 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Não é possível registrar essa quantidade de vendas pois não há a quantidade em estoque suficiente para essa venda. Gostaria de reiniciar a operação?");
+            string userAnswer = Console.ReadLine().ToLower();
+
+            if(userAnswer == "sim" || userAnswer == "si" || userAnswer == "s")
+            {
+                Console.Clear();
+                RegisterSale();
+            }
+        }
+
+            sale.SaleTime = DateTime.Now;
         _saleService.AddSale(sale);
         _productService.UpdateProductStock(sale.ProductId, sale.AmountSold);
     }
 
-    static List<SalesDTO> ListSales()
+    static void ListSales()
     {
-        Console.WriteLine("Essas foram todas as vendas encontradas: ");
+        List<SalesDTO> sales = _saleService.ListSales(null);
+
+        if (sales.Count == 0)
+        {
+            Console.WriteLine("Nenhuma venda encontrada");
+
+            CloseSystem();
+        }
 
         //Linebreak
         Console.WriteLine();
 
-        List<SalesDTO> sales = _saleService.ListSales(null);
+        Console.WriteLine("Essas foram todas as vendas encontradas: ");
+
+        //Linebreak
+        Console.WriteLine();
 
         foreach (SalesDTO sale in sales)
         {
             Console.WriteLine($"Funcionário: {sale.EmployeeName} - Produto Vendido: {sale.ProductName} - Total de vendas: {sale.SoldAmount}");
         }
 
-        return sales;
+        CloseSystem();
     }
 
     #endregion
@@ -262,7 +352,7 @@ class StockControlMain
         Console.WriteLine();
 
         Console.WriteLine("Digite o CPF do novo funcionário");
-        employee.Cpf = Console.ReadLine();
+        employee.Cpf = Console.ReadLine().Trim().Replace("-", "").Replace(".","");
 
         //Linebreak
         Console.WriteLine();
@@ -279,18 +369,33 @@ class StockControlMain
             //Linebreak
             Console.WriteLine();
 
-            Console.WriteLine("Digite a data de contratação.");
+            Console.WriteLine("Digite a data de contratação:");
             string datetime = Convert.ToDateTime(Console.ReadLine()).ToString("yyyy-MM-dd hh:mm:ss.ss");
 
             employee.HiringDate = Convert.ToDateTime(datetime);
         }
 
         _employeeService.AddEmployee(employee);
+
+        CloseSystem();
     }
 
     static List<Employee> GetEmployees()
     {
         List<Employee> employees = _employeeService.GetAllEmployees();
+
+        if (employees.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum empregado encontrado.");
+
+            CloseSystem();
+        }
+
+        //Linebreak
+        Console.WriteLine(); 
 
         Console.WriteLine("Esses foram todos os funcionários encontrados: ");
 
@@ -299,10 +404,119 @@ class StockControlMain
 
         foreach (Employee employee in employees)
         {
-            Console.WriteLine($"Nome: {employee.Name} - CPF: {employee.Cpf}");
+            string status = employee.IsEmployed == true ? "Empregado" : "Vínculo Rompido";
+            Console.WriteLine($"Nome: {employee.Name} - CPF: {employee.Cpf} - {status}");
         }
 
         return employees;
+    }
+
+    static void RemoveEmployee()
+    {
+        List<Employee> employees = _employeeService.GetAllEmployees();
+
+        if (employees.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum empregado encontrado.");
+
+            CloseSystem();
+        }
+
+        //Linebreak
+        Console.WriteLine();
+
+        Console.WriteLine("Esses foram todos os funcionários encontrados: ");
+
+        //Linebreak
+        Console.WriteLine();
+
+        foreach (Employee employee in employees)
+        {
+            string status = employee.IsEmployed == true ? "Empregado" : "Vínculo Rompido";
+            Console.WriteLine($"Nome: {employee.Name} - CPF: {employee.Cpf} - {status}");
+        }
+
+        //Linebreak
+        Console.WriteLine();
+
+        Console.WriteLine("Digite o ID de qual destes funcionários você deseja romper o vínculo:");
+        int usersChoice = Convert.ToInt32( Console.ReadLine());
+
+        Employee chosenEmployee = employees.Where(e => e.Id == usersChoice).FirstOrDefault();
+
+        if (chosenEmployee == null)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum funcionário encontrado com o ID digitado. Gostaria de reiniciar a operação?");
+            string userAnswer = Console.ReadLine().ToLower();
+
+            if (userAnswer == "sim" || userAnswer == "si" || userAnswer == "s")
+            {
+                Console.Clear();
+                RemoveEmployee();
+            }
+        }
+
+        _employeeService.RemoveEmployee(usersChoice);
+
+        //Linebreak
+        Console.WriteLine();
+
+        Console.WriteLine("O processo foi concluído com sucesso.");
+
+        CloseSystem();
+    }
+
+    static List<Employee> GetExEmployees()
+    {
+        List<Employee> employees = _employeeService.GetAllExEmployees();
+
+        if (employees.Count == 0)
+        {
+            //Linebreak
+            Console.WriteLine();
+
+            Console.WriteLine("Nenhum empregado encontrado.");
+
+            CloseSystem();
+        }
+
+        //Linebreak
+        Console.WriteLine();
+
+        Console.WriteLine("Esses foram todos os funcionários encontrados: ");
+
+        //Linebreak
+        Console.WriteLine();
+
+        foreach (Employee employee in employees)
+        {
+            string status = employee.IsEmployed == true ? "Empregado" : "Vínculo Rompido";
+            Console.WriteLine($"Nome: {employee.Name} - CPF: {employee.Cpf} - {status} - Data do desvínculo: dd/MM/yyyy HH:MM:SS", employee.UnemploymentDate);
+        }
+
+        return employees;
+    }
+
+    #endregion
+
+    #region Private
+
+    private static void CloseSystem()
+    {
+        //Linebreak
+        Console.WriteLine();
+
+        Console.WriteLine("Deseja encerrar o sistema? Sim ou Não.");
+        string userAnswer = Console.ReadLine().ToLower();
+
+        if (userAnswer == "não" || userAnswer == "nao" || userAnswer == "na" || userAnswer == "n")
+            Main();
     }
 
     #endregion

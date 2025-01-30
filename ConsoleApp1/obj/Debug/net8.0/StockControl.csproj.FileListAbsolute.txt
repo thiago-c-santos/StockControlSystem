@@ -178,3 +178,4 @@ C:\Users\thiago.santos\Desktop\StockControlSystem\ConsoleApp1\obj\Debug\net8.0\r
 C:\Users\thiago.santos\Desktop\StockControlSystem\ConsoleApp1\obj\Debug\net8.0\StockControl.pdb
 C:\Users\thiago.santos\Desktop\StockControlSystem\ConsoleApp1\obj\Debug\net8.0\StockControl.genruntimeconfig.cache
 C:\Users\thiago.santos\Desktop\StockControlSystem\ConsoleApp1\obj\Debug\net8.0\ref\StockControl.dll
+C:\Users\thiago.santos\Desktop\StockControlSystem\ConsoleApp1\obj\Debug\net8.0\StockControl.sourcelink.json

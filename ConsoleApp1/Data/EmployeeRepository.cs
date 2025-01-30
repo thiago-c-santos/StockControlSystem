@@ -39,6 +39,9 @@ namespace StockControl.Data
 
             Employee employee = new Employee();
 
+            if (reader == null)
+                return employee;
+
             while (reader.Read())
             {
                 employee.Id = reader.GetInt32(0);
@@ -65,6 +68,53 @@ namespace StockControl.Data
             using var reader = selectCmd.ExecuteReader();
 
             List<Employee> employees = new List<Employee>();
+
+            if(reader == null) return employees;
+
+            while (reader.Read())
+            {
+                employees.Add(new Employee()
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Cpf = reader.GetString(2),
+                    HiringDate = reader.GetDateTime(3),
+                    UnemploymentDate = reader.IsDBNull(4) ? DateTime.Now : reader.GetDateTime(4),
+                    IsEmployed = reader.GetBoolean(5),
+                });
+            }
+
+            connection.Close();
+
+            return employees;
+        }
+
+        public void RemoveEmployee(int id)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            using var updateCmd = connection.CreateCommand();
+            updateCmd.CommandText = $"Update Employee Set IsEmployed = false, UnemploymentDate = {DateTime.Now} where Id = {id}";
+
+            updateCmd.ExecuteNonQuery();
+
+            connection.Close();
+        }
+
+        public List<Employee> GetAllExEmployees()
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            using var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = $"Select * from Employee where IsEmployed = false";
+
+            using var reader = selectCmd.ExecuteReader();
+
+            List<Employee> employees = new List<Employee>();
+
+            if (reader == null) return employees;
 
             while (reader.Read())
             {

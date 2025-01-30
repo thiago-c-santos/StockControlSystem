@@ -21,5 +21,15 @@ namespace StockControl.Services
         {
             return _repository.GetAllEmployees();
         }
+
+        public void RemoveEmployee(int id)
+        {
+            _repository.RemoveEmployee(id);
+        }
+
+        public List<Employee> GetAllExEmployees()
+        {
+            return _repository.GetAllExEmployees();
+        }
     }
 }
